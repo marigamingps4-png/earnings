@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Class Earnings</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5fd1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Earnings">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{box-sizing:border-box;--bg:#f6f7fb;--card:#fff;--tx:#1d2433;--mu:#6b7385;--ac:#1f5fd1;--ok:#1b7f46;--bad:#c0392b;--ln:#e2e5ee;--hi:#eaf1fd;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10131a;--card:#1a1f2b;--tx:#e8ebf3;--mu:#98a0b3;--ac:#6ea0ff;--ok:#55c486;--bad:#ff7b6b;--ln:#2b3242;--hi:#202a40;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10131a;--card:#1a1f2b;--tx:#e8ebf3;--mu:#98a0b3;--ac:#6ea0ff;--ok:#55c486;--bad:#ff7b6b;--ln:#2b3242;--hi:#202a40;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:640px;margin:0 auto;padding:12px}
+h1{font-size:19px;margin:4px 0 10px}h2{font-size:15px;margin:14px 0 6px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:12px;margin-bottom:10px}
+.rate{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.big{font-size:22px;font-weight:700}.mu{color:var(--mu);font-size:12px}.ok{color:var(--ok)}.bad{color:var(--bad)}
+button{font:inherit;border:1px solid var(--ln);background:var(--card);color:var(--tx);border-radius:8px;padding:6px 10px;cursor:pointer}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+.tabs{display:flex;gap:6px;margin:8px 0}.tabs button{flex:1;padding:9px}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+input{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:6px 8px;width:100%;min-width:0}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:600;text-align:center}
+.row{display:grid;grid-template-columns:1.2fr auto 1fr 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--ln)}
+.row:last-child{border:0}.num{text-align:right;font-variant-numeric:tabular-nums}
+.st{display:flex;align-items:center;gap:6px}.st b{min-width:22px;text-align:center;font-size:17px}.st button{width:34px;height:34px;padding:0;font-size:18px}
+.today{background:var(--hi);border-radius:8px}
+.tot{display:flex;justify-content:space-between;padding:4px 0}.tot.b{font-weight:700;font-size:17px;border-top:1px solid var(--ln);margin-top:4px;padding-top:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.lab{font-size:12px;color:var(--mu);margin-bottom:2px}
+.item{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 0;border-bottom:1px solid var(--ln)}
+.item .full{grid-column:1/-1}.pill{display:inline-block;border-radius:99px;padding:2px 9px;font-size:12px;font-weight:600;background:var(--hi)}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl td,.tbl th{padding:5px 4px;border-bottom:1px solid var(--ln);text-align:right}.tbl th{color:var(--mu);font-weight:500}.tbl td:first-child,.tbl th:first-child{text-align:left}
+details summary{cursor:pointer;font-weight:600}.sec>summary{display:flex;justify-content:space-between;gap:8px;font-weight:700;padding:2px 0}.sec[open]>summary{margin-bottom:8px}.itm{border-bottom:1px solid var(--ln)}.itm summary{display:flex;justify-content:space-between;gap:8px;padding:10px 0;font-weight:500}.itm .item{border:0;padding-top:0}
+</style></head><body><main>
+<h1>💵 Class Earnings <span class="mu">· Mon–Fri only</span></h1>
+<div class="card rate"><div><div class="mu">1 USD =</div><div class="big" id="rate"></div><div class="mu" id="rst"></div></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="p" id="rf">Refresh rate</button><button id="sv" hidden>Save a copy</button></div></div>
+<details class="card"><summary>Settings</summary><div class="g2" style="margin-top:8px" id="set"></div></details>
+<div class="tabs" id="tabs"></div><div id="view"></div>
+<p class="mu">Rate is a mid-market estimate; your bank’s rate may differ a little. Data is saved on this device.</p>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const K=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const PK=k=>{const[a,b,c]=k.split('-');return new Date(+a,b-1,+c)};
+const add=(d,n)=>new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);
+const T=(()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate())})();
+const fd=(d,o)=>d.toLocaleDateString('en-GB',o||{day:'numeric',month:'short'});
+const US=n=>'$'+n.toFixed(2),ZA=n=>(n<0?'−R':'R')+Math.abs(n).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/\u00a0/g,' ');
+const wd=d=>d.getDay()%6!==0, mon=d=>add(d,-((d.getDay()+6)%7));
+const DEF={pay:3.5,fee:100,tithe:10,payFee:5,taxLimit:99000,carry:{},est:{},tithePaid:{},otherM:{},taxRate:18,taxBase:0,perWeek:19,estWeeks:4,plan:{biz:[],bday:[],sav:[],other:[],bill:[]},payday:5,startDay:1,backup:16.5,lastRate:0,classes:{},locked:{},inHand:0,perWeek:19,estWeeks:4,items:[]};
+let S;try{S=Object.assign({},DEF,JSON.parse(localStorage.getItem('ceApp')||'{}'))}catch(e){S=Object.assign({},DEF)}
+let loading=true,syncTimer=null;
+const save=()=>{if(!loading)S.ts=Date.now();try{localStorage.setItem('ceApp',JSON.stringify(S))}catch(e){}sched()};
+if(!S.v2){S.perWeek=19;S.v2=1}
+S.plan=Object.assign({biz:[],bday:[],sav:[],other:[],bill:[]},S.plan);let live=0,tab='week',wk=mon(T),mo=null;
+const cur=()=>live||S.lastRate||S.backup;
+function pS(d){const s=+S.startDay;let m=d.getMonth();if(d.getDate()<s)m--;return new Date(d.getFullYear(),m,s)}
+function pE(st){return add(new Date(st.getFullYear(),st.getMonth()+1,st.getDate()),-1)}
+function pD(st){const e=add(pE(st),1),p=+S.payday;return e.getDate()<=p?new Date(e.getFullYear(),e.getMonth(),p):new Date(e.getFullYear(),e.getMonth()+1,p)}
+const rOf=st=>+S.locked[K(st)]||cur();
+const lg=d=>{const v=S.classes[K(d)];return v===undefined||v===''?null:+v};
+function cnt(a,b,proj){let n=0;for(let d=a;d<=b;d=add(d,1)){if(!wd(d))continue;const v=lg(d);if(v!==null)n+=v;else if(proj&&d>T)n+=S.perWeek/5}return n}
+function rand(a,b){let r=0;for(let d=a;d<=b;d=add(d,1)){if(wd(d))r+=(lg(d)||0)*S.pay*rOf(pS(d))}return r}
+const net=(n,r)=>n>0?Math.max(n*S.pay*r*(1-S.tithe/100)-S.fee,0):0;
+function paydays(){const o=[];for(let st=pS(add(T,-70));o.length<12;st=pS(add(pE(st),1))){const p=pD(st);if(p>=T)o.push({st,p,n:cnt(st,pE(st),true)})}
+let c=+S.inHand;o.forEach(x=>{x.r=rOf(x.st);x.net=net(x.n,x.r);c+=x.net;x.cum=c});return o}
+function head(){$('#rate').textContent='R'+cur().toFixed(4);
+$('#rst').innerHTML=live?'<span class="ok">● LIVE</span> just now':(S.lastRate?'Saved rate (live not available here)':'Backup rate (live not available here)')}
+async function getRate(){$('#rf').textContent='…';try{const r=await fetch('https://open.er-api.com/v6/latest/USD');const j=await r.json();if(j&&j.rates&&j.rates.ZAR){live=+j.rates.ZAR;S.lastRate=live;save()}}catch(e){}
+$('#rf').textContent='Refresh rate';head();draw()}
+function setUI(){const f=[['pay','Pay per class ($)'],['fee','Conversion fee, once a month (R)'],['payFee','Payment fee, once a month (R)'],['tithe','Tithe (% of pay before the fee)'],['taxLimit','Tax starts above (R per tax year)'],['taxRate','Tax rate (%)'],['taxBase','Income already earned this tax year (R)'],['perWeek','Classes I expect per week (for estimates)'],['estWeeks','Weeks per month for estimates'],['payday','Payday (day of month)'],['startDay','Pay month starts on day'],['backup','Backup rate (R per $)']];
+$('#set').innerHTML=f.map(([k,l])=>`<div><div class="lab">${l}</div><input type="number" step="any" data-s="${k}" value="${S[k]}"></div>`).join('')+ghUI()+bkUI()+'<div class="mu" style="grid-column:1/-1">Start day 1 = pay months are calendar months (October classes are paid on the 5th of November). Use 5 only if your pay month runs 5th to 4th.</div>'}
+function tabsUI(){$('#tabs').innerHTML=[['week','Week'],['month','Month'],['plan','Plan'],['tax','Tax']].map(([k,l])=>`<button data-t="${k}" class="${tab===k?'on':''}">${l}</button>`).join('')}
+function weekV(){const days=[0,1,2,3,4].map(i=>add(wk,i));let n=0,usd=0,zr=0;const parts={};
+const rows=days.map(d=>{const v=lg(d)||0,st=pS(d),r=rOf(st);n+=v;usd+=v*S.pay;zr+=v*S.pay*r;const q=parts[K(st)]=parts[K(st)]||{st,n:0};q.n+=v;
+return`<div class="row ${+d===+T?'today':''}"><div><b>${fd(d,{weekday:'short'})}</b> <span class="mu">${fd(d)}</span></div><div class="st"><button data-c="${K(d)}" data-d="-1">−</button><b>${v}</b><button data-c="${K(d)}" data-d="1">+</button></div><div class="num">${US(v*S.pay)}</div><div class="num">${ZA(v*S.pay*r)}</div></div>`}).join('');
+const P=Object.values(parts);
+return`<div class="card"><div class="nav"><button data-w="-7">‹</button><div>${fd(wk)} – ${fd(add(wk,4))} ${wk.getFullYear()}<div class="mu">Sat &amp; Sun off${+wk===+mon(T)?' · this week':''}</div></div><button data-w="7">›</button></div>${rows}
+<div class="tot b"><span>Week total · ${n} class${n===1?'':'es'}</span><span>${US(usd)} → ${ZA(zr)}</span></div></div><div class="card"><details><summary>Add a batch of past classes</summary><div class="g2" style="margin-top:8px"><div><div class="lab">From</div><input type="date" id="bf"></div><div><div class="lab">To</div><input type="date" id="bt"></div><div><div class="lab">Total classes</div><input type="number" id="bn"></div><div style="align-self:end"><button class="p" data-batch>Spread over Mon–Fri</button></div></div><div class="mu" style="margin-top:6px">Spreads the total evenly over weekdays. Totals are exact; fix single days with + and −.</div></details></div>`+
+(P.length>1?`<div class="card"><b>Split at the new pay month</b><div class="mu">This week crosses a pay-month start, so each part has its own rate.</div>${P.map(q=>`<div class="tot"><span>From ${fd(q.st)} · ${q.n} classes @ R${rOf(q.st).toFixed(4)}</span><span>${ZA(q.n*S.pay*rOf(q.st))}</span></div>`).join('')}</div>`:'')}
+function monthV(){const st=mo||pS(T),en=pE(st),r=rOf(st),pd=pD(st);const segs=[];
+for(let a=st;a<=en;){const b=new Date(Math.min(+en,+add(mon(a),6)));if(cnt(a,b)||[0,1,2,3,4].some(i=>{const d=add(a,i);return d<=b&&wd(d)}))segs.push([a,b]);a=add(b,1)}
+const{n,zr,fee,ti,tp,tx,pl,ot,keep,fut,carry}=nums(st),lk=+S.locked[K(st)];
+const rows=segs.map(([a,b],i)=>{const c=cnt(a,b);return`<div class="tot"><span>Week ${i+1} · ${fd(a)} – ${fd(b)}</span><span>${c} · ${US(c*S.pay)} · ${ZA(rand(a,b))}</span></div>`}).join('');
+return`<div class="card"><div class="nav"><button data-m="-1">‹</button><div>Pay month ${fd(st)} – ${fd(en,{day:'numeric',month:'short',year:'numeric'})}<div class="mu">Paid ${fd(pd,{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</div></div><button data-m="1">›</button></div>${rows}
+<div class="tot b"><span>${n.toFixed(fut?1:0)} classes${fut?' (estimate)':''}</span><span>${US(n*S.pay)}</span></div>
+<div class="tot"><span>Rate ${lk?'<span class="pill">locked</span>':'<span class="pill">estimate</span>'}</span><span>R${r.toFixed(4)}</span></div>
+<div class="tot"><span>In rand</span><span>${ZA(zr)}</span></div>${ot>0?`<div class="tot"><span>Other income</span><span>+${ZA(ot)}</span></div>`:''}<div class="tot"><span>Fees (${ZA(num(S.fee))} conversion + ${ZA(num(S.payFee))} payment)</span><span>−${ZA(fee)}</span></div>
+<div class="tot"><span>${tp!==null?'Tithe (what you paid)':`Tithe (${S.tithe}% of ${ZA(zr+ot)})`}</span><span>−${ZA(ti)}</span></div>${tx>0?`<div class="tot"><span>Tax (${S.taxRate}% above ${ZA(+S.taxLimit)})</span><span>−${ZA(tx)}</span></div>`:''}<div class="tot b"><span>You keep</span><span class="ok">${ZA(keep)}</span></div><div class="tot"><span>Left over from last month</span><span>${carry>0?'+':''}${ZA(carry)}</span></div><div class="tot"><span>Planned to buy / save</span><span>−${ZA(pl)}</span></div><div class="tot b"><span>Left after planned</span><span class="${keep+carry-pl<0?'bad':'ok'}">${ZA(keep+carry-pl)}</span></div>${maybeOf(st)>0?`<div class="mu">Not counted: ${ZA(maybeOf(st))} maybe. If it comes, left would be <b>${ZA(keep+carry-pl+maybeOf(st)*(1-S.tithe/100))}</b> (after tithe).</div>`:''}</div>
+${fut?`<div class="card"><div class="lab">Estimated classes this month – type to change (empty = ${S.perWeek} a week × ${S.estWeeks||4} weeks)</div><input type="number" step="any" data-est="${K(st)}" value="${estOf(st)===null?'':estOf(st)}" placeholder="${(num(S.perWeek)*num(S.estWeeks||4)).toFixed(1)}"></div>`:''}${fut?'':`<div class="card"><b>What really happened this month</b><div class="g2" style="margin-top:8px"><div><div class="lab">Rand I received (after the ${ZA(num(S.fee))} conversion fee)</div><input type="number" step="any" data-rcv="${K(st)}" value="${lk?(n*S.pay*lk-num(S.fee)).toFixed(2):''}" placeholder="e.g. 2973"></div><div><div class="lab">Other money received (Dad etc.)</div><input type="number" step="any" data-om="${K(st)}" value="${(S.otherM||{})[K(st)]||''}" placeholder="e.g. 500"></div><div><div class="lab">Tithe I paid</div><input type="number" step="any" data-tp="${K(st)}" value="${tp===null?'':tp}" placeholder="${((zr+ot)*S.tithe/100).toFixed(2)}"></div></div><div class="mu" style="margin-top:6px">Empty boxes use the estimates above.</div></div>`}<div class="card"><div class="lab">Rate I got on payday (type it to lock this month)</div><input type="number" step="any" data-lock="${K(st)}" value="${lk||''}" placeholder="e.g. 16.62"></div>`}
+function planV(){const pdz=paydays();const it=S.items.map((x,i)=>{const p=+x.price||0;let h='';
+if(x.bought)h='<span class="pill">Bought</span>';else{const early=p<=+S.inHand?'now':(pdz.find(z=>z.cum>=p)||{}).p;let l='';
+if(x.date){const D=PK(x.date);let m=+S.inHand;pdz.forEach(z=>{if(z.p<=D)m+=z.net});const sp=S.items.reduce((s,y)=>s+(!y.bought&&y.date&&y.date<=x.date?+y.price||0:0),0);const left=m-sp;
+l=left>=0?`<span class="ok"><b>OK</b> – ${ZA(left)} left after buying</span>`:`<span class="bad"><b>Short by ${ZA(-left)}</b> on ${fd(D)}</span>`}
+h=l+`<div class="mu">Earliest payday you can afford it: ${early==='now'?'now':early?fd(early,{weekday:'short',day:'numeric',month:'short',year:'numeric'}):'beyond 12 paydays'} · ${(p/cur()/S.pay).toFixed(1)} classes</div>`}
+return`<div class="item"><input class="full" data-i="${i}" data-k="name" value="${(x.name||'').replace(/"/g,'&quot;')}" placeholder="What do you want to buy?"><div><div class="lab">Price (R)</div><input type="number" step="any" data-i="${i}" data-k="price" value="${x.price||''}"></div><div><div class="lab">Buy on</div><input type="date" data-i="${i}" data-k="date" value="${x.date||''}"></div><div class="full">${h}</div><label class="mu"><input type="checkbox" style="width:auto" data-i="${i}" data-k="bought" ${x.bought?'checked':''}> Bought</label><button data-del="${i}" style="justify-self:end">Remove</button></div>`}).join('');
+return`<div class="card"><div class="g2"><div><div class="lab">Money in hand today (R)</div><input type="number" step="any" data-s="inHand" value="${S.inHand}"></div><div><div class="lab">Classes I expect per week (planning)</div><input type="number" step="any" data-s="perWeek" value="${S.perWeek}"></div></div></div>
+<div class="card"><b>What I want to buy</b>${it||'<div class="mu" style="padding:8px 0">Nothing yet. Add something, pick the day you want to buy it, and see if the money will be there.</div>'}<button class="p" data-add style="margin-top:10px">+ Add item</button></div>
+<div class="card"><details><summary>Money coming in</summary><table class="tbl"><tr><th>Payday</th><th>Classes</th><th>After fee &amp; tithe</th><th>Total</th></tr>${pdz.map(z=>`<tr><td>${fd(z.p)}</td><td>${z.n.toFixed(1)}</td><td>${ZA(z.net)}</td><td>${ZA(z.cum)}</td></tr>`).join('')}</table><div class="mu" style="margin-top:6px">Past days use your logged classes. Future weekdays with nothing logged use your expected classes per week ÷ 5, at the rate shown for that pay month.</div></details></div>`}
+const num=x=>+x||0,esc=v=>String(v||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+function taxYr(d){const y=d.getMonth()>=2?d.getFullYear():d.getFullYear()-1;return[new Date(y,2,1),add(new Date(y+1,2,1),-1)]}
+function taxTable(ref,proj){const[ts,te]=taxYr(ref),th=num(S.taxLimit),rt=num(S.taxRate)/100;let cum=num(S.taxBase);const rows=[];
+for(let st=pS(add(ts,-45));;st=pS(add(pE(st),1))){const p=pD(st);if(p>te)break;if(p<ts)continue;const g=cp(st,proj)*S.pay*rOf(st)+otherOf(st),ov=Math.max(0,cum+g-th)-Math.max(0,cum-th);cum+=g;rows.push({st,p,g,cum,tax:ov*rt})}return rows}
+const taxOf=(st,pj)=>{const r=taxTable(pD(st),!!pj).find(x=>+x.st===+st);return r?r.tax:0};
+function bdMonths(b){const D=PK(b.date);let c=0;for(let st=pS(T),i=0;i<60;i++,st=pS(add(pE(st),1))){const p=pD(st);if(p>D)break;if(p>=T)c++}return Math.max(1,c)}
+const bdAmt=b=>b.save!==undefined&&b.save!==''?num(b.save):b.date?Math.max(0,num(b.budget)-num(b.have))/bdMonths(b):0;
+function amtForOld(g,x,st){if(g==='bill')return st<pS(T)||(x.until&&st>PK(x.until))?0:num(x.amount);const k=K(st),cs=pS(T),curK=K(cs);if(x.doneK===k&&k===curK)return 0;{const f=x.amts&&x.amts[k];if(f!==undefined&&f!==''&&num(f)>=0)return st<cs?0:Math.max(0,num(f))}let per,rem,step;
+if(g==='biz'){rem=Math.max(0,num(x.price)-num(x.paid));const u=x.until?moTo(x.until):0;step=num(x.perMonth)>0?num(x.perMonth):u?rem/u:rem;per=Math.min(step,rem)}
+else if(g==='bday'){rem=Math.max(0,num(x.budget)-num(x.have));step=bdAmt(x);per=Math.min(step,rem)}
+else{rem=num(x.goal)>0?Math.max(0,num(x.goal)-num(x.paid)):1e12;const u=x.until&&x.goal?moTo(x.until):0;step=num(x.amount)>0?num(x.amount):u?rem/u:0;per=Math.min(step,rem)}
+if(on(x,k))return per;if(!x.auto||!(per>0)||st<cs)return 0;
+let j=0;for(let a=cs;a<st&&j<80;j++)a=pS(add(pE(a),1));if(x.doneK===curK&&j>0)j--;
+const dl=g==='bday'?x.date:x.until;if(dl&&pD(st)>PK(dl))return 0;
+return Math.max(0,Math.min(per,rem-j*step))}
+const moTo=d=>bdMonths({date:d});
+function amtFor(g,x,st){if(g==='bill')return(x.until&&st>PK(x.until))||st<pS(T)?0:num(x.amount);const f=x.amts&&x.amts[K(st)];return f===undefined||f===''?0:Math.max(0,num(f))}
+const schedTotal=x=>Object.values(x.amts||{}).reduce((t,v)=>t+num(v),0);
+function migrate(){if(S.v3)return;const c0=pS(T);['biz','bday','sav'].forEach(g=>S.plan[g].forEach(x=>{x.amts=x.amts||{};let a=pS(add(c0,-1));for(let i=0;i<14;i++){const v=amtForOld(g,x,a);if(v>0&&(x.amts[K(a)]===undefined||x.amts[K(a)]===''))x.amts[K(a)]=String(Math.round(v*100)/100);a=pS(add(pE(a),1))}x.months=[];x.month='';x.auto=false}));S.v3=1;save()}
+function migrate4(){if(S.v4)return;if(+S.startDay===5){const rk=k=>/-05$/.test(k)?k.slice(0,-2)+'01':k;const rm=o=>{const n={};Object.keys(o||{}).forEach(k=>{n[rk(k)]=o[k]});return n};S.locked=rm(S.locked);S.carry=rm(S.carry);S.est=rm(S.est);Object.values(S.plan).forEach(a=>a.forEach(x=>{if(x.amts)x.amts=rm(x.amts);if(x.months)x.months=x.months.map(rk);if(x.month)x.month=rk(x.month);if(x.doneK)x.doneK=rk(x.doneK)}));S.startDay=1}S.v4=1;save()}
+const catSum=(g,st)=>S.plan[g].reduce((s,x)=>s+amtFor(g,x,st),0);
+function plannedOf(st){return catSum('bill',st)+catSum('biz',st)+catSum('bday',st)+catSum('sav',st)}
+const otherOf=st=>S.plan.other.reduce((s,x)=>s+(!x.maybe&&x.date&&PK(x.date)>=st&&PK(x.date)<=pE(st)?num(x.amount):0),0)+num((S.otherM||{})[K(st)]);
+const maybeOf=st=>S.plan.other.reduce((s,x)=>s+(x.maybe&&x.date&&PK(x.date)>=st&&PK(x.date)<=pE(st)?num(x.amount):0),0);
+const payAmt=x=>{const rem=Math.max(0,num(x.price)-num(x.paid));return num(x.perMonth)>0?Math.min(num(x.perMonth),rem):rem};
+const estOf=st=>{const v=S.est&&S.est[K(st)];return v===undefined||v===''?null:num(v)};
+const cp=(st,proj)=>{const e=proj&&st>pS(T)?estOf(st):null;return e!==null?e:(proj&&st>pS(T)?num(S.perWeek)*num(S.estWeeks||4):cnt(st,pE(st),proj))};
+const tpOf=st=>{const v=S.tithePaid&&S.tithePaid[K(st)];return v===undefined||v===''?null:num(v)};
+const so=id=>S.open&&S.open[id]?'open':'';
+const on=(x,k)=>(x.months||[]).includes(k)||x.month===k;
+function nums0(st){const fut=st>pS(T),en=pE(st),n=cp(st,fut),zr=fut?n*S.pay*rOf(st):rand(st,en),ot=otherOf(st),fee=n>0?num(S.fee)+num(S.payFee):0,tp=tpOf(st),ti=tp!==null?tp:(zr+ot)*S.tithe/100,tx=taxOf(st,fut),keep=zr+ot-fee-ti-tx,pl=plannedOf(st);return{fut,n,zr,ot,fee,ti,tp,tx,keep,pl,left:keep-pl}}
+const man=st=>{const m=S.carry[K(st)];return m===undefined||m===''?null:num(m)};
+function autoCarry(st){let a=st;for(let i=0;i<12;i++)a=pS(add(a,-1));let c=0;for(;a<st;a=pS(add(pE(a),1))){const M=nums0(a),m=man(a);c=M.keep+(m===null?c:m)-M.pl}return c}
+function nums(st){const M=nums0(st),m=man(st);M.auto=autoCarry(st);M.carry=m===null?M.auto:m;M.left=M.keep+M.carry-M.pl;return M}
+function taxV(){const[ts,te]=taxYr(T),R=taxTable(T,true),th=num(S.taxLimit),dl={day:'numeric',month:'short',year:'numeric'},paid=num(S.taxBase)+R.filter(r=>r.p<=T).reduce((s,r)=>s+r.g,0),over=R.some(r=>r.p<=T&&r.cum>th),f=R.find(r=>r.cum>th);
+const msg=over?`<b class="bad">You’re over ${ZA(th)} – pay ${S.taxRate}% tax on income above it each month.</b>`:f?`<b>Tax starts with the ${fd(f.p,{day:'numeric',month:'long',year:'numeric'})} payday</b> (estimate). From then pay ${S.taxRate}% of the income above ${ZA(th)}.`:`<b class="ok">Not expected to pass ${ZA(th)} this tax year.</b>`;
+return`<div class="card"><div class="nav"><div>Tax year ${fd(ts,dl)} – ${fd(te,dl)}</div></div>${msg}<div style="background:var(--hi);border-radius:99px;height:10px;margin:10px 0"><div style="width:${Math.min(100,paid/th*100)}%;height:10px;border-radius:99px;background:var(--ac)"></div></div>
+<div class="tot"><span>Income received so far</span><span>${ZA(paid)}</span></div><div class="tot"><span>Left before tax starts</span><span>${ZA(Math.max(th-paid,0))}</span></div></div>
+<details class="card sec" data-sec="taxtbl" ${so('taxtbl')}><summary><span>Month by month</span><span></span></summary><table class="tbl"><tr><th>Payday</th><th>Income</th><th>Year total</th><th>Tax</th></tr>${R.map(r=>`<tr${r.tax>0?' style="font-weight:700"':''}><td>${fd(r.p)}</td><td>${ZA(r.g)}</td><td>${ZA(r.cum)}</td><td class="${r.tax>0?'bad':''}">${ZA(r.tax)}</td></tr>`).join('')}</table><div class="mu" style="margin-top:6px">Income counts in the month you are paid, before tithe and fee. Future months use your expected classes per week (Settings). Put income earned earlier this tax year in Settings. Estimate only, not tax advice.</div></details>`}
+function planV2(){const st=mo||pS(T),k=K(st),en=pE(st),P=S.plan,N=nums(st),keep=N.keep,ot=N.ot,mbN=maybeOf(st);
+const sb=catSum('biz',st),sd=catSum('bday',st),ss=catSum('sav',st),bl=catSum('bill',st),left=keep+N.carry-sb-sd-ss-bl;
+const ck=(g,i,x,l)=>`<label class="mu"><input type="checkbox" style="width:auto" data-g="${g}" data-i="${i}" data-k="month" ${on(x,k)?'checked':''}> ${l}</label>`;
+const inp=(g,i,key,l,v,t)=>`<div><div class="lab">${l}</div><input type="${t||'number'}" step="any" data-g="${g}" data-i="${i}" data-k="${key}" value="${esc(v)}"></div>`;
+const nm=(g,i,x,ph)=>`<input class="full" data-g="${g}" data-i="${i}" data-k="name" value="${esc(x.name)}" placeholder="${ph}">`;
+const au=(g,i,x)=>`<label class="mu"><input type="checkbox" style="width:auto" data-g="${g}" data-i="${i}" data-k="auto" ${x.auto?'checked':''}> Repeat every month until goal</label>`;
+const dn=(g,i,x)=>amtFor(g,x,st)>0?`<button class="p full" data-done="${g}.${i}">✓ Done this month – add ${ZA(amtFor(g,x,st))} to saved</button>`:'';
+const mv=(g,i,x)=>on(x,k)||(x.amts&&x.amts[k]!==undefined&&x.amts[k]!=='')?`<button class="full" data-move="${g}.${i}">→ Move to next pay month</button>`:'';
+const cin=(g,i,x)=>{const ks=new Set([...(x.months||[]),...(x.month?[x.month]:[]),...Object.keys(x.amts||{}).filter(m=>x.amts[m]!==''&&x.amts[m]!==undefined)]);const l=[...ks].sort();return l.length?`<div class="full mu">Counted in: ${l.map(m=>`<button data-unm="${g}.${i}.${m}" style="padding:2px 8px;margin:2px">${fd(PK(m))} – ${fd(pE(PK(m)))} ✕</button>`).join('')}</div>`:''};
+const del=(g,i)=>`<button data-pdel="${g}.${i}" style="justify-self:end">Remove</button>`;
+const wrap=(g,i,x,t,a,body)=>x.paidOff?'':`<details class="itm" data-g="${g}" data-i="${i}" ${x.open?'open':''}><summary><span>${esc(t)||'New item'}</span><span>${a}${g==='bill'?(amtFor(g,x,st)>0?' <span class="pill">'+(on(x,k)?'✓ paid':'due'+(x.day?' day '+x.day:''))+'</span>':''):(amtFor(g,x,st)>0?' <span class="pill">'+(x.auto&&!on(x,k)?'↻ ':'✓ ')+'this month</span>':'')}${g==='other'?` <button data-pdel="other.${i}" style="padding:1px 8px">✕</button>`:''}</span></summary><div class="item">${body}</div></details>`;
+const gi=(x,goal,saved)=>goal>0?`<div class="full mu">Scheduled ${ZA(schedTotal(x)+num(saved))} of ${ZA(goal)} · ${goal-schedTotal(x)-num(saved)>=0.005?'left to schedule '+ZA(goal-schedTotal(x)-num(saved)):goal-schedTotal(x)-num(saved)<=-0.005?'<span class="bad">over by '+ZA(schedTotal(x)+num(saved)-goal)+'</span>':'<span class="ok">fully scheduled ✓</span>'}</div>`:'';
+const sp=(g,i,x,goal)=>goal>0?`<div><div class="lab">Split evenly over (months)</div><input type="number" id="sp-${g}-${i}" value="3"></div><div style="align-self:end"><button class="p" data-split="${g}.${i}">Split from this month</button></div>`:'';
+const biz=P.biz.map((x,i)=>wrap('biz',i,x,x.name,x.price?ZA(num(x.price)):'',`${nm('biz',i,x,'What do you need for the business?')}${inp('biz',i,'price','Price (R)',x.price)}${inp('biz',i,'paid','Saved so far (R)',x.paid)}${gi(x,num(x.price),x.paid)}${sp('biz',i,x,num(x.price))}${del('biz',i)}`)).join('');
+const bd=P.bday.map((x,i)=>wrap('bday',i,x,x.name,x.date?fd(PK(x.date)):'',`${nm('bday',i,x,'Whose birthday?')}${inp('bday',i,'date','Date',x.date,'date')}${inp('bday',i,'budget','Gift budget (R)',x.budget)}${inp('bday',i,'have','Saved so far (R)',x.have)}${gi(x,num(x.budget),x.have)}${sp('bday',i,x,num(x.budget))}${del('bday',i)}`)).join('');
+const sv=P.sav.map((x,i)=>wrap('sav',i,x,x.name,x.goal?ZA(num(x.goal)):'',`${nm('sav',i,x,'What are you saving for?')}${inp('sav',i,'goal','Goal (R) – optional',x.goal)}${inp('sav',i,'paid','Saved so far (R)',x.paid)}${gi(x,num(x.goal),x.paid)}${sp('sav',i,x,num(x.goal))}${del('sav',i)}`)).join('');
+const oth=P.other.map((x,i)=>wrap('other',i,x,(x.name||'Other income')+(x.date?' · '+fd(PK(x.date)):''),x.amount?(x.maybe?'maybe ':'')+'+'+ZA(num(x.amount)):'',`${nm('other',i,x,'Who is it from?')}${inp('other',i,'date','Date',x.date,'date')}${inp('other',i,'amount','Amount (R)',x.amount)}<label class="mu"><input type="checkbox" style="width:auto" data-g="other" data-i="${i}" data-k="maybe" ${x.maybe?'checked':''}> Not sure yet – don't count it</label>${del('other',i)}`)).join('');
+const othCard=`<details class="card sec" data-sec="other" ${so('other')}><summary><span>Other income</span><span>+${ZA(ot)}</span></summary>${oth||'<div class="mu" style="padding:8px 0">Money from family or anything else, counted in the pay month of its date. Tithe and tax are taken from it too.</div>'}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"><button class="p" data-quick="200">+ R200 (Dad)</button><button class="p" data-quick="500">+ R500 (Dad)</button><button data-quick="500" data-maybe="1">+ R500 (Dad, maybe)</button><button data-padd="other">+ Other amount</button></div></details>`;
+const ahead=`<details class="card sec" data-sec="ahead" ${so('ahead')}><summary><span>Plan ahead</span><span></span></summary><div class="mu">Tap a month to plan it. Future months use your expected classes per week. Left includes what is left over from the month before.</div><table class="tbl"><tr><th>Pay month</th><th>You keep</th><th>Planned</th><th>Left</th><th>Birthdays due</th></tr>${[0,1,2,3,4,5,6].map(i=>{let a=pS(T);for(let j=0;j<i;j++)a=pS(add(pE(a),1));const M=nums(a),due=P.bday.reduce((s,b)=>s+(b.date&&PK(b.date)>=a&&PK(b.date)<=pE(a)?num(b.budget):0),0);return`<tr><td><button data-goto="${K(a)}" style="padding:2px 8px">${fd(a)}</button></td><td>${ZA(M.keep)}</td><td>${ZA(M.pl)}</td><td class="${M.left<0?'bad':'ok'}">${ZA(M.left)}</td><td>${due?ZA(due):'–'}</td></tr>`}).join('')}</table></details>`;
+const bills=P.bill.map((x,i)=>wrap('bill',i,x,x.name,x.amount?ZA(num(x.amount))+'/mo':'',`${nm('bill',i,x,'e.g. Rent, phone, subscription, instalment')}${inp('bill',i,'amount','Amount per month (R)',x.amount)}${inp('bill',i,'day','Due on day of month',x.day)}${inp('bill',i,'until','Stop after (optional)',x.until,'date')}${ck('bill',i,x,'Paid this month')}${del('bill',i)}`)).join('');
+const billCard=`<details class="card sec" data-sec="bill" ${so('bill')}><summary><span>Monthly bills &amp; payments</span><span>−${ZA(bl)}</span></summary>${bills||'<div class="mu" style="padding:8px 0">Rent, phone, subscriptions, instalments. They count every month automatically; set a stop date for payments that end.</div>'}<button class="p" data-padd="bill" style="margin-top:10px">+ Add bill</button>${P.bill.length?`<div class="tot b"><span>Bills this pay month</span><span>${ZA(bl)}</span></div>`:''}</details>`;
+const gm=[-1,0,1,2,3,4,5].map(i=>{let a=pS(T);if(i<0)a=pS(add(a,-1));else for(let j=0;j<i;j++)a=pS(add(pE(a),1));return a});
+const gall=[['biz'],['bday'],['sav']].flatMap(([g])=>P[g].map((x,i)=>({g,i,x})));const gits=gall.filter(({x})=>!x.paidOff&&(x.name||schedTotal(x)>0));
+const gnum=gm.map(m=>nums(m));
+const gridCard=`<details class="card sec" data-sec="grid" ${S.open&&S.open.grid===false?'':'open'}><summary><span>Split amounts by month</span><span></span></summary><div class="mu">Type how much goes to each item in each pay month. Last month is on the left.</div><div style="overflow-x:auto"><table class="tbl" style="min-width:560px"><tr><th>Item</th>${gm.map(m=>`<th>${fd(m)}</th>`).join('')}<th>Total</th></tr>${gits.map(({g,i,x})=>`<tr><td>${esc(x.name)||'(no name)'}<div style="white-space:nowrap"><button data-paid="${g}.${i}" style="padding:1px 6px;font-size:11px">✓ Paid</button> <button data-pdel="${g}.${i}" style="padding:1px 6px;font-size:11px">✕</button></div></td>${gm.map(m=>`<td><input type="number" step="any" data-grid="${g}.${i}.${K(m)}" value="${(x.amts||{})[K(m)]||''}" style="width:68px;padding:4px"></td>`).join('')}<td><b>${ZA(schedTotal(x))}</b></td></tr>`).join('')||'<tr><td colspan="9" class="mu">Add items below, then split their amounts here.</td></tr>'}<tr><td><b>Bills + all planned</b></td>${gm.map(m=>`<td>${ZA(plannedOf(m))}</td>`).join('')}<td></td></tr><tr><td>You keep</td>${gnum.map(n=>`<td>${ZA(n.keep)}</td>`).join('')}<td></td></tr><tr><td><b>Left</b></td>${gnum.map(n=>`<td class="${n.left<0?'bad':'ok'}"><b>${ZA(n.left)}</b></td>`).join('')}<td></td></tr></table></div></details>`;
+const pdl=gall.filter(({x})=>x.paidOff);
+const paidCard=pdl.length?`<details class="card sec" data-sec="paidlist" ${so('paidlist')}><summary><span>Paid / done (${pdl.length})</span><span></span></summary>${pdl.map(({g,i,x})=>`<div class="tot"><span>${esc(x.name)||'(no name)'} · ${ZA(schedTotal(x))}</span><span><button data-restore="${g}.${i}" style="padding:2px 8px">Restore</button> <button data-pdel="${g}.${i}" style="padding:2px 8px">Delete</button></span></div>`).join('')}<div class="mu">Paid items leave your lists. Amounts for this and earlier months still count; later months are cleared.</div></details>`:'';
+const g={};P.bday.filter(b=>b.date&&PK(b.date)>=T).forEach(b=>{const m=b.date.slice(0,7);(g[m]=g[m]||{n:0,s:0}).n++;g[m].s+=num(b.budget)});
+const up=Object.keys(g).sort().map(m=>{const[y,mm]=m.split('-');return`<div class="tot"><span>${new Date(+y,mm-1,1).toLocaleDateString('en-GB',{month:'long',year:'numeric'})} · ${g[m].n} birthday${g[m].n>1?'s':''}</span><span>${ZA(g[m].s)}</span></div>`}).join('');
+const tm=P.bday.reduce((s,x)=>s+(x.date&&PK(x.date)>=T?bdAmt(x):0),0);
+return`<div class="card"><div class="nav"><button data-m="-1">‹</button><div>Pay month ${fd(st)} – ${fd(en)}</div><button data-m="1">›</button></div>
+<div class="tot"><span>You keep (incl. other income, after tithe, fee${N.tx>0?', tax':''})${N.fut?' · estimate':''}</span><span>${ZA(keep)}</span></div>
+<div class="tot"><span>Left over from last month</span><span>${N.carry>0?'+':''}${ZA(N.carry)}</span></div><div class="tot"><span>Monthly bills</span><span>−${ZA(bl)}</span></div><div class="tot"><span>Goslin Original</span><span>−${ZA(sb)}</span></div><div class="tot"><span>Birthday saving</span><span>−${ZA(sd)}</span></div><div class="tot"><span>Savings</span><span>−${ZA(ss)}</span></div>
+<div class="tot b"><span>Left after planned</span><span class="${left<0?'bad':'ok'}">${ZA(left)}</span></div>${mbN>0?`<div class="mu">Not counted: ${ZA(mbN)} maybe. If it comes, left would be <b>${ZA(left+mbN*(1-S.tithe/100))}</b> (after tithe).</div>`:''}<div class="lab" style="margin-top:8px">Left over from last month – type to change (automatic: ${ZA(N.auto)})</div><input type="number" step="any" data-carry="${K(st)}" value="${man(st)===null?'':man(st)}" placeholder="${N.auto.toFixed(2)}"><div class="g2" style="margin-top:8px"><div><div class="lab">Classes I expect per week</div><input type="number" step="any" data-s="perWeek" value="${S.perWeek}"></div>${N.fut?`<div><div class="lab">Estimated classes this pay month</div><input type="number" step="any" data-est="${K(st)}" value="${estOf(st)===null?'':estOf(st)}" placeholder="${(num(S.perWeek)*num(S.estWeeks||4)).toFixed(1)}"></div>`:''}</div><div class="mu" style="margin-top:6px">Tick an item to count it in this pay month. It can go below zero at the start of the month and fills up as you teach.</div></div>
+${gridCard}${paidCard}${ahead}${othCard}${billCard}<details class="card sec" data-sec="biz" ${so('biz')}><summary><span>Goslin Original</span><span>−${ZA(sb)}</span></summary>${biz||'<div class="mu" style="padding:8px 0">Things to buy for the business, or that you might need.</div>'}<button class="p" data-padd="biz" style="margin-top:10px">+ Add item</button></details>
+<details class="card sec" data-sec="bday" ${so('bday')}><summary><span>Birthdays</span><span>−${ZA(sd)}</span></summary>${bd||'<div class="mu" style="padding:8px 0">Add a birthday and a budget to see how much to save each month.</div>'}<button class="p" data-padd="bday" style="margin-top:10px">+ Add birthday</button>${up?`<h2>Coming up</h2>${up}<div class="tot b"><span>Save per month for all</span><span>${ZA(tm)}</span></div>`:''}</details>
+<details class="card sec" data-sec="sav" ${so('sav')}><summary><span>My savings</span><span>−${ZA(ss)}</span></summary>${sv||'<div class="mu" style="padding:8px 0">Add what you save each month.</div>'}<button class="p" data-padd="sav" style="margin-top:10px">+ Add saving</button></details>`}
+function draw(){tabsUI();$('#view').innerHTML=tab==='week'?weekV():tab==='month'?monthV():tab==='tax'?taxV():planV2()}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const D=b.dataset;if(D.pdel!==undefined)e.preventDefault();
+if(D.t){tab=D.t;draw()}else if(D.c){const v=Math.max(0,(lg(PK(D.c))||0)+ +D.d);S.classes[D.c]=v;save();draw()}
+else if(D.w){wk=add(wk,+D.w);draw()}else if(D.m){const st=mo||pS(T);mo=D.m>0?pS(add(pE(st),1)):pS(add(st,-1));draw()}
+else if('batch' in D){const f=$('#bf').value,t=$('#bt').value,n=+$('#bn').value;if(f&&t&&n>0){const ds=[];for(let d=PK(f);d<=PK(t);d=add(d,1))if(wd(d))ds.push(d);ds.forEach((d,i)=>{S.classes[K(d)]=Math.floor((i+1)*n/ds.length)-Math.floor(i*n/ds.length)});save();draw()}}else if('add' in D){S.items.push({name:'',price:'',date:'',bought:false});save();draw()}
+else if(D.pdel){const[g,i]=D.pdel.split('.');S.plan[g].splice(+i,1);save();draw()}
+else if(D.paid){const[g,i]=D.paid.split('.'),x=S.plan[g][+i],c0=K(pS(T));x.paidOff=true;if(x.amts)Object.keys(x.amts).forEach(m=>{if(m>c0)delete x.amts[m]});save();draw()}
+else if(D.restore){const[g,i]=D.restore.split('.');S.plan[g][+i].paidOff=false;save();draw()}
+else if(D.split){const[g,i]=D.split.split('.'),x=S.plan[g][+i],n=Math.max(1,Math.floor(num(document.querySelector('#sp-'+g+'-'+i).value))||1),goal=num(g==='biz'?x.price:g==='bday'?x.budget:x.goal),sv=num(g==='bday'?x.have:x.paid),tot=Math.max(0,goal-sv),part=Math.floor(tot/n*100)/100;x.amts=x.amts||{};let a=pS(T);for(let j=0;j<n;j++){x.amts[K(a)]=String(j<n-1?part:Math.round((tot-part*(n-1))*100)/100);a=pS(add(pE(a),1))}save();draw()}
+else if(D.unm){const[g,i,m]=D.unm.split('.'),x=S.plan[g][+i];x.months=(x.months||[]).filter(y=>y!==m);if(x.month===m)x.month='';if(x.amts)delete x.amts[m];save();draw()}
+else if(D.move){const[g,i]=D.move.split('.'),x=S.plan[g][+i],cu=mo||pS(T),kk=K(cu),nk=K(pS(add(pE(cu),1))),was=on(x,kk);x.months=(x.months||[]).filter(m=>m!==kk);if(x.month===kk)x.month='';if(was&&!x.months.includes(nk))x.months.push(nk);if(x.amts&&x.amts[kk]!==undefined){x.amts[nk]=x.amts[kk];delete x.amts[kk]}save();draw()}
+else if(D.done){const[g,i]=D.done.split('.'),x=S.plan[g][+i],kk=K(mo||pS(T)),a=amtFor(g,x,mo||pS(T));if(g==='bday')x.have=num(x.have)+a;else x.paid=num(x.paid)+a;x.months=(x.months||[]).filter(m=>m!==kk);if(x.month===kk)x.month='';if(kk===K(pS(T)))x.doneK=kk;save();draw()}
+else if(D.goto){mo=pS(PK(D.goto));draw()}
+else if(D.quick){{const cu=mo||pS(T);S.plan.other.push({name:'Dad',date:T>=cu&&T<=pE(cu)?K(T):K(cu),amount:D.quick,maybe:!!D.maybe})};save();draw()}
+else if(D.padd){S.plan[D.padd].push(D.padd==='biz'?{name:'',price:'',month:'',open:true}:D.padd==='bday'?{name:'',date:'',budget:'',have:'',month:'',open:true}:D.padd==='bill'?{name:'',amount:'',day:'',until:'',open:true}:D.padd==='other'?{name:'',date:(()=>{const cu=mo||pS(T);return T>=cu&&T<=pE(cu)?K(T):K(cu)})(),amount:'',open:true}:{name:'',amount:'',month:'',open:true});save();draw()}});
+document.addEventListener('change',e=>{const t=e.target,D=t.dataset;
+if(D.s){S[D.s]=+t.value;save();head();draw()}else if(D.lock){if(t.value)S.locked[D.lock]=+t.value;else delete S.locked[D.lock];save();draw()}
+else if(D.rcv){if(t.value==='')delete S.locked[D.rcv];else{const a0=PK(D.rcv),nn=cnt(a0,pE(a0));if(nn>0)S.locked[D.rcv]=((+t.value+num(S.fee))/(nn*S.pay)).toFixed(6)}save();draw()}
+else if(D.om){if(t.value==='')delete S.otherM[D.om];else S.otherM[D.om]=t.value;save();draw()}
+else if(D.tp){if(t.value==='')delete S.tithePaid[D.tp];else S.tithePaid[D.tp]=t.value;save();draw()}else if(D.est){if(t.value==='')delete S.est[D.est];else S.est[D.est]=t.value;save();draw()}else if(D.grid){const[g,i,m]=D.grid.split('.'),x=S.plan[g][+i];x.amts=x.amts||{};if(t.value==='')delete x.amts[m];else x.amts[m]=t.value;save();draw()}else if(D.carry){if(t.value==='')delete S.carry[D.carry];else S.carry[D.carry]=t.value;save();draw()}else if(D.g){const x=S.plan[D.g][+D.i];if(D.k==='amt'){const kk=K(mo||pS(T));x.amts=x.amts||{};if(t.value==='')delete x.amts[kk];else x.amts[kk]=t.value}else if(D.k==='month'){const kk=K(mo||pS(T));x.months=(x.months||[]).filter(m=>m!==kk);if(x.month===kk)x.month='';if(t.checked)x.months.push(kk)}else x[D.k]=t.type==='checkbox'?t.checked:t.value;save();draw()}});
+$('#rf').onclick=getRate;document.addEventListener('toggle',e=>{const d=e.target;if(d.classList&&d.classList.contains('itm')){S.plan[d.dataset.g][+d.dataset.i].open=d.open;save()}else if(d.dataset&&d.dataset.sec){S.open=S.open||{};S.open[d.dataset.sec]=d.open;save()}},true);
+function bkUI(){return `<div style="grid-column:1/-1"><b>Backup / move my data</b><div class="mu">Tap "Show my data", copy the text, then paste it into the installed app and tap "Import pasted data".</div><div style="display:flex;gap:6px;margin:6px 0;flex-wrap:wrap"><button data-bk="show">Show my data</button><button data-bk="imp">Import pasted data</button></div><textarea id="bk" rows="4" style="width:100%;font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:6px"></textarea></div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!b.dataset.bk)return;const ta=document.querySelector('#bk');
+if(b.dataset.bk==='show'){const o=JSON.parse(JSON.stringify(S));delete o.gh;ta.value=JSON.stringify(o);ta.focus();ta.select()}
+else{try{const d=JSON.parse(ta.value);if(!d||typeof d!=='object'||!d.plan)throw 0;const gh=S.gh;Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,DEF,d);if(gh)S.gh=gh;S.plan=Object.assign({biz:[],bday:[],sav:[],other:[],bill:[]},S.plan);save();setUI();head();draw();ta.value='Imported ✓'}catch(x){ta.value='That does not look like the data. Paste the text you copied.'}}});
+migrate();migrate4();
+/* ---------- GitHub sync (data lives in your repo) ---------- */
+S.gh=Object.assign({owner:'',repo:'earnings',path:'earnings-data.json',branch:'main'},S.gh);
+const tokGet=()=>{try{return localStorage.getItem('ceTok')||''}catch(e){return ''}};
+let remoteSha=null,ghMsg=GH_IDLE();
+function GH_IDLE(){return tokGet()?'Ready':'Not connected'}
+const setSync=m=>{ghMsg=m;const e=document.querySelector('#ghs');if(e)e.textContent=m};
+function ghUI(){const g=S.gh,ip=(k,l,t)=>`<div><div class="lab">${l}</div><input type="${t||'text'}" data-gh="${k}" value="${esc(g[k])}" autocapitalize="off" autocomplete="off"></div>`;
+return `<div style="grid-column:1/-1"><b>GitHub sync</b><div class="mu">Your data is saved to a file in your own repo, so it follows you to any device. The token stays on this device only.</div></div>${ip('owner','GitHub username')}${ip('repo','Repository')}${ip('path','Data file')}${ip('branch','Branch')}<div style="grid-column:1/-1"><div class="lab">Access token (needs Contents: read &amp; write on that repo)</div><input type="password" data-tok="1" value="${esc(tokGet())}" autocomplete="off"></div><div style="grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap"><button class="p" data-ghpush="1">Save to GitHub now</button><button data-ghpull="1">Load from GitHub</button></div><div class="mu" style="grid-column:1/-1" id="ghs">${ghMsg}</div>`}
+const b64=t=>btoa(unescape(encodeURIComponent(t))),unb64=t=>decodeURIComponent(escape(atob(t.replace(/\n/g,''))));
+const ghReady=()=>tokGet()&&S.gh.owner&&S.gh.repo&&S.gh.path;
+const ghApi=(m,body)=>{const g=S.gh;return fetch(`https://api.github.com/repos/${g.owner}/${g.repo}/contents/${g.path}`+(m==='GET'?`?ref=${encodeURIComponent(g.branch)}`:''),{method:m,headers:{Authorization:'Bearer '+tokGet(),Accept:'application/vnd.github+json'},body:body?JSON.stringify(body):undefined})};
+const snap=()=>{const o=JSON.parse(JSON.stringify(S));delete o.gh;return o};
+async function pull(force){if(!ghReady()){loading=false;return}setSync('Checking GitHub…');
+try{const r=await ghApi('GET');if(r.status===404){remoteSha=null;setSync('No data file yet - it is created on your first save');loading=false;return}
+if(!r.ok)throw new Error(r.status===401?'bad token':r.status===403?'no access':'error '+r.status);
+const j=await r.json();remoteSha=j.sha;const d=JSON.parse(unb64(j.content));
+if(force||(d.ts||0)>(S.ts||0)){const gh=S.gh;Object.keys(S).forEach(k=>delete S[k]);Object.assign(S,DEF,d,{gh});S.plan=Object.assign({biz:[],bday:[],sav:[],other:[],bill:[]},S.plan);try{localStorage.setItem('ceApp',JSON.stringify(S))}catch(e){}setUI();head();draw();setSync('Loaded from GitHub')}
+else setSync('Up to date with GitHub')}catch(e){setSync('GitHub: '+e.message)}loading=false}
+async function push(retry){if(!ghReady())return;setSync('Saving to GitHub…');
+try{const r=await ghApi('PUT',{message:'Update earnings data',content:b64(JSON.stringify(snap(),null,1)),branch:S.gh.branch,sha:remoteSha||undefined});
+if(r.status===409||r.status===422){if(!retry){await pull(false);return push(true)}throw new Error('changed on another device - load first')}
+if(!r.ok)throw new Error(r.status===401?'bad token':r.status===403||r.status===404?'no access to repo':'error '+r.status);
+const j=await r.json();remoteSha=j.content.sha;setSync('Saved to GitHub '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}))}catch(e){setSync('GitHub: '+e.message)}}
+function sched(){if(loading||!ghReady())return;clearTimeout(syncTimer);syncTimer=setTimeout(()=>push(),2500)}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!loading)pull(false)});
+document.addEventListener('change',e=>{const t=e.target,D=t.dataset;if(D.gh){S.gh[D.gh]=t.value.trim();try{localStorage.setItem('ceApp',JSON.stringify(S))}catch(x){}}else if(D.tok){try{localStorage.setItem('ceTok',t.value.trim())}catch(x){}setSync(t.value.trim()?'Ready':'Not connected')}});
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.ghpush)push();else if(b.dataset.ghpull)pull(true)});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+setUI();head();draw();getRate();pull(false);
+</script></body></html>
